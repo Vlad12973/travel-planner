@@ -1,5 +1,6 @@
 streamlit
-google-search-results
+serpapi==2.4.2
 agno
+
 
 
