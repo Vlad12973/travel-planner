@@ -1,8 +1,9 @@
 import streamlit as st
 import json
 import os
-from google_search_results import GoogleSearch  # ✅ FIXED IMPORT
+from serpapi import GoogleSearch  # ✅ THIS WORKS WITH 'serpapi' package
 from datetime import datetime
+
 
 # REMOVE agno imports for now - will add back later
 # from agno.agent import Agent
@@ -183,3 +184,4 @@ if st.button("🚀 Generate Travel Plan", type="primary"):
         st.info("💡 Add SERPAPI_KEY in Settings → Secrets")
 
 st.sidebar.info("🔑 Get free SerpAPI key: serpapi.com")
+
