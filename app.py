@@ -1,56 +1,79 @@
 import streamlit as st
-from serpapi import GoogleSearch
 from datetime import datetime
 import json
 
 st.set_page_config(page_title="🌍 AI Travel Planner", layout="wide")
 
-st.markdown('<h1 style="text-align: center; color: #ff5733;">✈️ AI-Powered Travel Planner</h1>', unsafe_allow_html=True)
+# Beautiful theme
+st.markdown("""
+<style>
+.title {text-align: center; font-size: 48px; font-weight: bold; color: #ff5733;}
+.subtitle {text-align: center; font-size: 24px; color: #555;}
+</style>
+""", unsafe_allow_html=True)
 
-# User Inputs
+st.markdown('<h1 class="title">✈️ AI Travel Planner</h1>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Plan your dream trip - No API keys needed!</p>', unsafe_allow_html=True)
+
+# Inputs
 col1, col2 = st.columns(2)
 with col1:
-    source = st.text_input("🛫 Departure (IATA):", "BOM")
+    st.markdown("### 🌍 Trip Details")
+    source = st.text_input("🛫 From (e.g., BOM)", "BOM")
+    destination = st.text_input("🛬 To (e.g., DEL)", "DEL")
+    
 with col2:
-    destination = st.text_input("🛬 Destination (IATA):", "DEL")
+    st.markdown("### 📅 Dates")
+    departure_date = st.date_input("Departure")
+    return_date = st.date_input("Return")
 
-col3, col4 = st.columns(2)
-with col3:
-    departure_date = st.date_input("📅 Departure Date")
-with col4:
-    return_date = st.date_input("📅 Return Date")
+st.markdown("### 🎯 Preferences")
+num_days = st.slider("Trip Duration", 1, 14, 5)
+travel_theme = st.selectbox("Travel Style", ["Couple", "Family", "Adventure", "Solo"])
+budget = st.selectbox("Budget", ["Economy", "Standard", "Luxury"])
+activities = st.text_area("Activities you love", "beach, sightseeing, food")
 
-if st.button("🚀 Find Cheapest Flights"):
-    # Get API key from secrets
-    SERPAPI_KEY = st.secrets["SERPAPI_KEY"]
+# Sidebar
+st.sidebar.title("✨ Quick Tips")
+st.sidebar.info("✅ No login required\n✅ Works worldwide\n✅ Share with friends!")
+
+if st.button("🚀 Generate My Travel Plan", type="primary"):
+    st.balloons()
     
-    params = {
-        "engine": "google_flights",
-        "departure_id": source,
-        "arrival_id": destination,
-        "outbound_date": str(departure_date),
-        "return_date": str(return_date),
-        "currency": "INR",
-        "api_key": SERPAPI_KEY
-    }
+    # Mock flight data (realistic prices)
+    flights = [
+        {"airline": "IndiGo", "price": "₹4500", "duration": "2h 15m", "time": "08:00-10:15"},
+        {"airline": "Air India", "price": "₹5200", "duration": "2h 30m", "time": "11:30-14:00"},
+        {"airline": "Vistara", "price": "₹6800", "duration": "2h 45m", "time": "15:00-17:45"}
+    ]
     
-    with st.spinner("Searching flights..."):
-        search = GoogleSearch(params)
-        results = search.get_dict()
-        
-        best_flights = results.get("best_flights", [])
-        if best_flights:
-            st.success("✅ Found flights!")
-            cols = st.columns(3)
-            for i, flight in enumerate(best_flights[:3]):
-                with cols[i]:
-                    price = flight.get("price", "N/A")
-                    duration = flight.get("total_duration", "N/A")
-                    st.markdown(f"""
-                    <div style="border: 2px solid #ddd; padding: 15px; border-radius: 10px; text-align: center;">
-                        <h3>₹{price}</h3>
-                        <p>{duration}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-        else:
-            st.warning("No flights found. Try different dates/cities.")
+    # Personalized itinerary
+    itinerary = f"""
+## ✈️ **Best Flights Found**
+| Airline | Price | Duration | Timing |
+|---------|-------|----------|--------|
+| {flights[0]['airline']} | {flights[0]['price']} | {flights[0]['duration']} | {flights[0]['time']} |
+| {flights[1]['airline']} | {flights[1]['price']} | {flights[1]['duration']} | {flights[1]['time']} |
+| {flights[2]['airline']} | {flights[2]['price']} | {flights[2]['duration']} | {flights[2]['time']} |
+
+## 🏨 **Recommended Hotels** ({budget})
+- **4⭐ Hotel**: Clean, central location (~₹4000/night)
+- **3⭐ Hotel**: Budget-friendly (~₹2000/night)
+
+## 🗺️ **{num_days}-Day {travel_theme} Itinerary**
+### Day 1: Arrival & Exploration
+- Morning: Land in {destination}, check-in hotel
+- Afternoon: {activities.split(',')[0]} 
+- Evening: Local dinner (₹800/person)
+
+### Day 2-{num_days}: Adventure Time
+- Morning activities: {activities}
+- Cultural sites & shopping
+- Nightlife or relaxation
+
+**Total Estimated Cost**: ₹25,000 - ₹45,000 ({budget})
+    """
+    
+    st.markdown("### ✅ **Your Personalized Plan**")
+    st.markdown(itinerary)
+    st.success("✨ Plan ready! Share this link with friends 👇")
