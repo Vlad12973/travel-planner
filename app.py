@@ -109,7 +109,8 @@ if st.button("🚀 Generate Travel Plan"):
             """
             
             # Call Google AI Directly (Stable)
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-pro')
+
             response = model.generate_content(prompt)
             ai_output = response.text
             
@@ -135,3 +136,4 @@ if st.button("🚀 Generate Travel Plan"):
     st.divider()
     st.subheader("🗺️ Your AI Itinerary")
     st.markdown(ai_output)
+
