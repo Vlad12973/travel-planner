@@ -159,7 +159,7 @@ researcher = Agent(
         "Prioritize information from reliable sources and official travel guides.",
         "Provide well-structured summaries with key insights and recommendations."
     ],
-    model=Gemini(id="gemini-2.0-flash-exp"),
+    model=Gemini(id="gemini-1.5-flash"),
     tools=[SerpApiTools(api_key=SERPAPI_KEY)],
 )
 
@@ -172,7 +172,7 @@ planner = Agent(
         "Optimize the schedule for convenience and enjoyment.",
         "Present the itinerary in a structured format."
     ],
-    model=Gemini(id="gemini-2.0-flash-exp"),
+    model=Gemini(id="gemini-1.5-flash"),
 )
 
 hotel_restaurant_finder = Agent(
@@ -184,7 +184,7 @@ hotel_restaurant_finder = Agent(
         "Prioritize results based on user preferences, ratings, and availability.",
         "Provide direct booking links or reservation options where possible."
     ],
-    model=Gemini(id="gemini-2.0-flash-exp"),
+    model=Gemini(id="gemini-1.5-flash"),
     tools=[SerpApiTools(api_key=SERPAPI_KEY)],
 )
 
@@ -295,3 +295,4 @@ if st.button("🚀 Generate Travel Plan"):
     st.write(itinerary.content)
 
     st.success("✅ Travel plan generated successfully!")
+
