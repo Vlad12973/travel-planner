@@ -7,8 +7,6 @@ from agno.tools.serpapi import SerpApiTools
 from agno.models.google import Gemini
 from datetime import datetime
 
-import streamlit as st
-
 # Set up Streamlit UI with a travel-friendly theme
 st.set_page_config(page_title="🌍 AI Travel Planner", layout="wide")
 st.markdown(
@@ -41,8 +39,8 @@ st.markdown('<p class="subtitle">Plan your dream trip with AI! Get personalized 
 
 # User Inputs Section
 st.markdown("### 🌍 Where are you headed?")
-source = st.text_input("🛫 Departure City (IATA Code):", "BOM")  # Example: BOM for Mumbai
-destination = st.text_input("🛬 Destination (IATA Code):", "DEL")  # Example: DEL for Delhi
+source = st.text_input("🛫 Departure City (IATA Code):", "BOM")
+destination = st.text_input("🛬 Destination (IATA Code):", "DEL")
 
 st.markdown("### 📅 Plan Your Adventure")
 num_days = st.slider("🕒 Trip Duration (days):", 1, 14, 5)
@@ -73,7 +71,7 @@ st.markdown(
 def format_datetime(iso_string):
     try:
         dt = datetime.strptime(iso_string, "%Y-%m-%d %H:%M")
-        return dt.strftime("%b-%d, %Y | %I:%M %p")  # Example: Mar-06, 2025 | 6:20 PM
+        return dt.strftime("%b-%d, %Y | %I:%M %p")
     except:
         return "N/A"
 
@@ -112,8 +110,9 @@ visa_required = st.sidebar.checkbox("🛃 Check Visa Requirements")
 travel_insurance = st.sidebar.checkbox("🛡️ Get Travel Insurance")
 currency_converter = st.sidebar.checkbox("💱 Currency Exchange Rates")
 
-SERPAPI_KEY = "8d6668cb144147cc0b8a1a61756cd8a269e4b665e8213c96cddda9aadb67d369"
-GOOGLE_API_KEY = "AIzaSyAzMiZX8E0DhfUnOp_z7b3PgK9zi7B3ppY"
+# Get API keys from Streamlit secrets
+SERPAPI_KEY = st.secrets["SERPAPI_KEY"]
+GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
 params = {
@@ -162,7 +161,6 @@ researcher = Agent(
     ],
     model=Gemini(id="gemini-2.0-flash-exp"),
     tools=[SerpApiTools(api_key=SERPAPI_KEY)],
-    add_datetime_to_instructions=True,
 )
 
 planner = Agent(
@@ -175,7 +173,6 @@ planner = Agent(
         "Present the itinerary in a structured format."
     ],
     model=Gemini(id="gemini-2.0-flash-exp"),
-    add_datetime_to_instructions=True,
 )
 
 hotel_restaurant_finder = Agent(
@@ -189,7 +186,6 @@ hotel_restaurant_finder = Agent(
     ],
     model=Gemini(id="gemini-2.0-flash-exp"),
     tools=[SerpApiTools(api_key=SERPAPI_KEY)],
-    add_datetime_to_instructions=True,
 )
 
 # Generate Travel Plan
@@ -255,7 +251,7 @@ if st.button("🚀 Generate Travel Plan"):
                     booking_options = results_with_booking['best_flights'][idx]['booking_token']
 
                 booking_link = f"https://www.google.com/travel/flights?tfs="+booking_options if booking_options else "#"
-                print(booking_link)
+                
                 # Flight card layout
                 st.markdown(
                     f"""
