@@ -1,5 +1,4 @@
 import os
-import json
 from datetime import datetime
 
 import streamlit as st
@@ -64,9 +63,17 @@ st.markdown(
             color: #555;
         }
         .stSlider > div {
-            background-color: #f9f9f9;
+            background-color: #0c1117;
             padding: 10px;
             border-radius: 10px;
+        }
+        .flight-card {
+            border: 2px solid #2b2f3a;
+            border-radius: 16px;
+            padding: 18px;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin-bottom: 20px;
         }
     </style>
     """,
@@ -83,14 +90,13 @@ st.markdown(
 
 st.markdown("### 🌍 Where are you headed?")
 
-# User types city names
 source_city = st.text_input("🛫 Departure City (name):", "Hyderabad")
 destination_city = st.text_input("🛬 Destination City (name):", "Delhi")
 
 source_airports = get_airport_options(source_city)
 destination_airports = get_airport_options(destination_city)
 
-# Departure airport selection
+# Departure airport
 if source_airports:
     source_choice = st.selectbox(
         "Select departure airport (IATA):",
@@ -101,7 +107,7 @@ if source_airports:
 else:
     source = st.text_input("Departure IATA code (fallback):", "HYD")
 
-# Destination airport selection
+# Destination airport
 if destination_airports:
     dest_choice = st.selectbox(
         "Select destination airport (IATA):",
@@ -130,7 +136,7 @@ st.markdown(
         border-radius: 10px;
         margin-top: 20px;
     ">
-        <h3>🌟 Your {travel_theme} to {destination_city} is about to begin! 🌟</h3>
+        <h3>🌟 Your {travel_theme} from {source_city} to {destination_city} is about to begin! 🌟</h3>
         <p>Let's find the best flights, stays, and experiences for your journey.</p>
     </div>
     """,
@@ -198,6 +204,17 @@ def extract_cheapest_flights(flight_data):
     sorted_flights = sorted(best_flights, key=lambda x: x.get("price", float("inf")))[:3]
     return sorted_flights
 
+def build_booking_link(flight):
+    booking_token = flight.get("booking_token")
+    if booking_token:
+        return f"https://www.google.com/travel/flights?tfs={booking_token}"
+    # Fallback – generic Google Flights search for this route and dates
+    return (
+        "https://www.google.com/travel/flights?"
+        f"q=flights+from+{source}+to+{destination}"
+        f"+on+{departure_date}+return+{return_date}"
+    )
+
 # ============== MAIN ACTION ==============
 
 if st.button("🚀 Generate Travel Plan"):
@@ -212,9 +229,7 @@ if st.button("🚀 Generate Travel Plan"):
 
     # Prepare flight summary + price stats for AI
     flight_summary = "No flights found."
-    min_price = None
-    max_price = None
-    avg_price = None
+    min_price = max_price = avg_price = None
 
     if cheapest_flights:
         prices = []
@@ -238,14 +253,20 @@ if st.button("🚀 Generate Travel Plan"):
     if client:
         with st.spinner("🤖 Our advanced AI is crafting your personalized travel plan..."):
             try:
-                budget_hint = f"Flight price range (from live data): min ₹{min_price}, max ₹{max_price}, avg ₹{avg_price}." if min_price is not None else "No flight price data available."
+                budget_hint = (
+                    f"Flight price range (from live data): min ₹{min_price}, "
+                    f"max ₹{max_price}, avg ₹{int(avg_price)}."
+                    if min_price is not None
+                    else "No flight price data available."
+                )
 
                 prompt = f"""
-You are an expert travel planner.
+You are an expert travel planner for Indian travellers.
 
-Create a detailed {num_days}-day itinerary for a {travel_theme.lower()} trip from {source_city} ({source}) to {destination_city} ({destination}).
+Create a detailed {num_days}-day itinerary for a {travel_theme.lower()} trip
+from {source_city} ({source}) to {destination_city} ({destination}).
 
-Traveler preferences:
+Traveller preferences:
 - Activities: {activity_preferences}
 - Budget level: {budget}
 - Flight class: {flight_class}
@@ -261,10 +282,10 @@ Cost information:
 
 Use the flight price range and budget level to:
 - Suggest a realistic total trip budget in INR (including flights, hotels, food, local travel, and activities).
-- Adjust hotel type, daily spending, and activity choices (more premium for Luxury, more value-optimized for Economy).
+- Adjust hotel type, daily spending, and activity choices (more premium for Luxury, more value-optimised for Economy).
 
 Please provide:
-1. A short 2-3 line overview of the trip.
+1. A short 2–3 line overview of the trip.
 2. The best flight choice from the above, with reasoning (and approximate cost).
 3. 3 hotel suggestions (area + type, approximate nightly price range, no real booking links).
 4. A day-by-day itinerary for {num_days} days (morning / afternoon / evening).
@@ -273,7 +294,7 @@ Please provide:
    - Hotels (per night × nights)
    - Food & local travel (per day × days)
    - Activities / tickets
-6. A one-line summary like: "This plan fits well within a typical {budget} Indian traveler budget."
+6. A one-line summary like: "This plan fits well within a typical {budget} Indian traveller budget."
 
 Format the response nicely using Markdown with headings, subheadings, and bullet points.
                 """
@@ -281,7 +302,13 @@ Format the response nicely using Markdown with headings, subheadings, and bullet
                 completion = client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[
-                        {"role": "system", "content": "You are a helpful, detail-oriented travel planner for Indian travelers. Always think in INR and be realistic on costs."},
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are a helpful, detail-oriented travel planner "
+                                "for Indian travellers. Always think in INR and be realistic on costs."
+                            ),
+                        },
                         {"role": "user", "content": prompt},
                     ],
                     temperature=0.7,
@@ -310,23 +337,28 @@ Format the response nicely using Markdown with headings, subheadings, and bullet
                 departure_time = format_datetime(departure.get("time", "N/A"))
                 arrival_time = format_datetime(arrival.get("time", "N/A"))
 
+                booking_link = build_booking_link(flight)
+
                 st.markdown(
                     f"""
-                    <div style="
-                        border: 2px solid #ddd;
-                        border-radius: 10px;
-                        padding: 15px;
-                        text-align: center;
-                        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-                        background-color: #f9f9f9;
-                        margin-bottom: 20px;
-                    ">
-                        <img src="{airline_logo}" width="100" alt="Flight Logo" />
+                    <div class="flight-card">
+                        <img src="{airline_logo}" width="80" alt="Flight Logo" />
                         <h3 style="margin: 10px 0;">{airline_name}</h3>
                         <p><strong>Departure:</strong> {departure_time}</p>
                         <p><strong>Arrival:</strong> {arrival_time}</p>
                         <p><strong>Duration:</strong> {total_duration} min</p>
                         <h2 style="color: #008000;">💰 {price}</h2>
+                        <a href="{booking_link}" target="_blank" style="
+                            display: inline-block;
+                            padding: 8px 18px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            color: #fff;
+                            background-color: #007bff;
+                            text-decoration: none;
+                            border-radius: 6px;
+                            margin-top: 10px;
+                        ">🔗 Book on Google Flights</a>
                     </div>
                     """,
                     unsafe_allow_html=True,
