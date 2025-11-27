@@ -41,138 +41,221 @@ def get_airport_options(city_name: str):
 st.markdown(
     """
     <style>
-        body {
-            background: linear-gradient(135deg, #fce3c3 0%, #a2e4f5 50%, #00b3b3 100%);
-        }
-        /* HERO */
-        .hero {
-            border-radius: 24px;
-            padding: 32px 40px 80px 40px;
-            background: linear-gradient(
-                120deg,
-                rgba(0,0,0,0.65) 0%,
-                rgba(0,0,0,0.25) 40%,
-                rgba(0,0,0,0.1) 100%
-            ), url("https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg") center/cover no-repeat;
-            color: #fff;
-            position: relative;
-            margin-bottom: 60px;
-        }
-        .hero-title {
-            font-size: 38px;
-            font-weight: 700;
-        }
-        .hero-sub {
-            font-size: 18px;
-            margin-top: 8px;
-            opacity: 0.9;
-        }
-        .popular-wrapper {
-            margin-top: 28px;
-            display: flex;
-            gap: 16px;
-        }
-        .popular-card {
-            width: 180px;
-            border-radius: 18px;
-            background: rgba(255,255,255,0.92);
-            color: #222;
-            padding: 10px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-        }
-        .popular-card img {
-            border-radius: 14px;
-            width: 100%;
-            height: 90px;
-            object-fit: cover;
-            margin-bottom: 8px;
-        }
-        .search-card {
-            position: absolute;
-            left: 40px;
-            right: 40px;
-            bottom: -42px;
-            background: rgba(255,255,255,0.98);
-            border-radius: 18px;
-            padding: 14px 22px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-        }
-        .search-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #777;
-            margin-bottom: 4px;
-        }
+    :root {
+        --accent: #09c6f9;
+        --accent-soft: rgba(9, 198, 249, 0.16);
+        --accent-strong: #ff7b72;
+        --bg-deep: #050816;
+        --bg-panel: rgba(15, 23, 42, 0.88);
+        --text-main: #e5e7eb;
+        --text-muted: #9ca3af;
+    }
 
-        /* SIDEBAR CARD */
-        section[data-testid="stSidebar"] {
-            background: #050816;
-        }
-        section[data-testid="stSidebar"] > div {
-            padding-top: 16px;
-        }
-        .sidebar-card {
-            background: #111827;
-            border-radius: 18px;
-            padding: 18px 16px 22px 16px;
-            box-shadow: 0 8px 22px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-        .sidebar-title {
-            display:flex;
-            align-items:center;
-            gap:8px;
-            font-size:18px;
-            font-weight:600;
-            color:#e5e7eb;
-            margin-bottom:10px;
-        }
-        .sidebar-section-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.09em;
-            color: #9ca3af;
-            margin-top: 12px;
-            margin-bottom: 4px;
-        }
-        /* make radio / checkbox text brighter */
-        .sidebar-card label {
-            color: #e5e7eb !important;
-            font-size: 14px;
-        }
-        .sidebar-card .stRadio > label, .sidebar-card .stCheckbox > label {
-            padding-left: 4px;
-        }
+    body {
+        background: radial-gradient(circle at top left, #1f2937 0%, #020617 55%, #000 100%);
+        color: var(--text-main);
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-        /* FLIGHT CARDS */
-        .flight-section-title {
-            background:#0b63f6;
-            color:white;
-            display:inline-block;
-            padding:6px 14px;
-            border-radius:999px;
-            font-weight:600;
-            margin-bottom:18px;
-        }
-        .flight-card {
-            border: 2px solid #2b2f3a;
-            border-radius: 16px;
-            padding: 18px;
-            text-align: center;
-            background-color: #f9f9f9;
-            margin-bottom: 20px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-            transition: all 0.18s ease-out;
-        }
-        .flight-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 24px rgba(0,0,0,0.25);
-        }
+    /* HERO */
+    .hero {
+        border-radius: 24px;
+        padding: 32px 40px 80px 40px;
+        background:
+            linear-gradient(115deg, rgba(3, 7, 18, 0.9) 0%, rgba(15, 23, 42, 0.35) 40%, rgba(248, 250, 252, 0.05) 100%),
+            url("https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg") center/cover no-repeat;
+        color: #fff;
+        position: relative;
+        margin-bottom: 64px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    }
+    .hero-title {
+        font-size: 40px;
+        font-weight: 750;
+        letter-spacing: 0.01em;
+    }
+    .hero-sub {
+        font-size: 17px;
+        margin-top: 10px;
+        opacity: 0.92;
+    }
+    .popular-wrapper {
+        margin-top: 28px;
+        display: flex;
+        gap: 16px;
+    }
+    .popular-card {
+        width: 190px;
+        border-radius: 18px;
+        background: rgba(248, 250, 252, 0.96);
+        color: #111827;
+        padding: 10px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
+    }
+    .popular-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.7);
+    }
+    .popular-card img {
+        border-radius: 14px;
+        width: 100%;
+        height: 90px;
+        object-fit: cover;
+        margin-bottom: 8px;
+    }
+    .search-card {
+        position: absolute;
+        left: 40px;
+        right: 40px;
+        bottom: -42px;
+        background: rgba(15, 23, 42, 0.96);
+        border-radius: 18px;
+        padding: 14px 22px;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        backdrop-filter: blur(14px);
+    }
+    .search-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+
+    /* MAIN AREA */
+    .main .block-container {
+        padding-top: 32px;
+    }
+
+    /* SIDEBAR (LEFT PANEL) */
+    section[data-testid="stSidebar"] {
+        background: radial-gradient(circle at top, #020617 0%, #020617 40%, #000 100%);
+    }
+    section[data-testid="stSidebar"] > div {
+        padding-top: 18px;
+    }
+    .sidebar-card {
+        background: var(--bg-panel);
+        border-radius: 20px;
+        padding: 18px 16px 24px 16px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        backdrop-filter: blur(18px);
+    }
+    .sidebar-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 10px;
+    }
+    .sidebar-title-pill {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #0b1120;
+        font-weight: 600;
+    }
+    .sidebar-section-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-muted);
+        margin-top: 14px;
+        margin-bottom: 4px;
+    }
+    .sidebar-tag-budget { color: #facc15; }
+    .sidebar-tag-flight { color: #38bdf8; }
+    .sidebar-tag-essentials { color: #4ade80; }
+
+    .sidebar-card label {
+        color: var(--text-main) !important;
+        font-size: 14px;
+    }
+    .sidebar-card .stRadio > label,
+    .sidebar-card .stCheckbox > label {
+        padding-left: 4px;
+    }
+
+    /* PRIMARY BUTTONS */
+    .stButton button, .stDownloadButton button {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%) !important;
+        color: #0b1120 !important;
+        border-radius: 999px !important;
+        border: none !important;
+        font-weight: 600 !important;
+        box-shadow: 0 12px 30px rgba(8, 47, 73, 0.75) !important;
+        transition: transform 0.14s ease-out, box-shadow 0.14s ease-out, filter 0.14s ease-out;
+    }
+    .stButton button:hover, .stDownloadButton button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 40px rgba(8, 47, 73, 0.9) !important;
+        filter: brightness(1.05);
+    }
+
+    /* HEADINGS */
+    h2, h3 {
+        color: var(--text-main);
+        letter-spacing: 0.02em;
+    }
+
+    /* FLIGHT SECTION PILL */
+    .flight-section-title {
+        background: var(--accent-soft);
+        color: var(--accent);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        border: 1px solid rgba(56, 189, 248, 0.5);
+    }
+
+    /* FLIGHT CARDS */
+    .flight-card {
+        border-radius: 18px;
+        padding: 18px;
+        text-align: center;
+        background: radial-gradient(circle at top left, #f9fafb 0%, #e5e7eb 40%, #d4d4d8 100%);
+        margin-bottom: 20px;
+        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(148, 163, 184, 0.7);
+        transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
+    }
+    .flight-card:hover {
+        transform: translateY(-4px) scale(1.01);
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.8);
+    }
+
+    /* FOOTER STRIP */
+    .footer-strip {
+        margin-top: 32px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.92);
+        color: var(--text-muted);
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        backdrop-filter: blur(12px);
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
 
 # ============== HERO + SEARCH BAR ==============
 
@@ -255,36 +338,64 @@ activity_preferences = st.text_area(
 # sidebar
 with st.sidebar:
     st.markdown(
-        '<div class="sidebar-card">'
-        '<div class="sidebar-title">🌍 Travel Assistant</div>',
+        """
+        <div class="sidebar-card">
+            <div class="sidebar-title">
+                🧭 Travel Assistant
+                <span class="sidebar-title-pill">Smart planner</span>
+            </div>
+        """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="sidebar-section-label">Budget preference</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sidebar-section-label">'
+        '<span class="sidebar-tag-budget">●</span> Budget preference'
+        '</div>',
+        unsafe_allow_html=True,
+    )
     budget = st.radio("", ["Economy", "Standard", "Luxury"], index=0)
 
-    st.markdown('<div class="sidebar-section-label">Flight class</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sidebar-section-label">'
+        '<span class="sidebar-tag-flight">●</span> Flight class'
+        '</div>',
+        unsafe_allow_html=True,
+    )
     flight_class = st.radio("", ["Economy", "Business", "First Class"], index=0)
 
-    st.markdown('<div class="sidebar-section-label">Preferred hotel rating</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sidebar-section-label">Preferred hotel rating</div>',
+        unsafe_allow_html=True,
+    )
     hotel_rating = st.selectbox("", ["Any", "3⭐", "4⭐", "5⭐"])
 
-    st.markdown('<div class="sidebar-section-label">Packing checklist</div>', unsafe_allow_html=True)
-    for item, checked in {
+    st.markdown(
+        '<div class="sidebar-section-label">Packing checklist</div>',
+        unsafe_allow_html=True,
+    )
+    packing_items = {
         "👕 Clothes": True,
         "🩴 Comfortable Footwear": True,
         "🕶️ Sunglasses & Sunscreen": False,
         "📖 Travel Guidebook": False,
         "💊 Medications & First-Aid": True,
-    }.items():
+    }
+    for item, checked in packing_items.items():
         st.checkbox(item, value=checked)
 
-    st.markdown('<div class="sidebar-section-label">Travel essentials</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sidebar-section-label">'
+        '<span class="sidebar-tag-essentials">●</span> Travel essentials'
+        '</div>',
+        unsafe_allow_html=True,
+    )
     visa_required = st.checkbox("🛃 Check Visa Requirements")
     travel_insurance = st.checkbox("🛡️ Get Travel Insurance")
     currency_converter = st.checkbox("💱 Currency Exchange Rates")
 
     st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 # ============== IATA FROM CITY NAMES ==============
@@ -472,4 +583,9 @@ Return a Markdown-formatted answer with:
 
     st.subheader("🗺️ Your AI Itinerary (Budget‑Aware)")
     st.markdown(ai_itinerary)
+st.markdown(
+    '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
+    unsafe_allow_html=True,
+)
+
 
