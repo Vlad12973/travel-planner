@@ -569,7 +569,12 @@ Return a Markdown-formatted answer with:
             for i, f in enumerate(cheapest_flights):
                 with cols[i]:
                     logo = f.get("airline_logo", "")
-                    airline = f.get("airline", "Unknown Airline")
+
+# Try multiple places for airline name before falling back
+raw_airline = f.get("airline")
+segment_airline = f.get("flights", [{}])[0].get("airline")
+airline = raw_airline or segment_airline or "Airline"
+
                     price = f.get("price", "Not Available")
                     duration = f.get("total_duration", "N/A")
                     flights_info = f.get("flights", [{}])
@@ -618,3 +623,4 @@ Return a Markdown-formatted answer with:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
