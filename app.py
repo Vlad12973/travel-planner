@@ -44,6 +44,7 @@ st.markdown(
         body {
             background: linear-gradient(135deg, #fce3c3 0%, #a2e4f5 50%, #00b3b3 100%);
         }
+        /* HERO */
         .hero {
             border-radius: 24px;
             padding: 32px 40px 80px 40px;
@@ -103,6 +104,48 @@ st.markdown(
             color: #777;
             margin-bottom: 4px;
         }
+
+        /* SIDEBAR CARD */
+        section[data-testid="stSidebar"] {
+            background: #050816;
+        }
+        section[data-testid="stSidebar"] > div {
+            padding-top: 16px;
+        }
+        .sidebar-card {
+            background: #111827;
+            border-radius: 18px;
+            padding: 18px 16px 22px 16px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar-title {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-size:18px;
+            font-weight:600;
+            color:#e5e7eb;
+            margin-bottom:10px;
+        }
+        .sidebar-section-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: #9ca3af;
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+        /* make radio / checkbox text brighter */
+        .sidebar-card label {
+            color: #e5e7eb !important;
+            font-size: 14px;
+        }
+        .sidebar-card .stRadio > label, .sidebar-card .stCheckbox > label {
+            padding-left: 4px;
+        }
+
+        /* FLIGHT CARDS */
         .flight-section-title {
             background:#0b63f6;
             color:white;
@@ -210,27 +253,39 @@ activity_preferences = st.text_area(
 )
 
 # sidebar
-st.sidebar.title("🌎 Travel Assistant")
-st.sidebar.subheader("Personalize Your Trip")
+with st.sidebar:
+    st.markdown(
+        '<div class="sidebar-card">'
+        '<div class="sidebar-title">🌍 Travel Assistant</div>',
+        unsafe_allow_html=True,
+    )
 
-budget = st.sidebar.radio("💰 Budget Preference:", ["Economy", "Standard", "Luxury"])
-flight_class = st.sidebar.radio("✈️ Flight Class:", ["Economy", "Business", "First Class"])
-hotel_rating = st.sidebar.selectbox("🏨 Preferred Hotel Rating:", ["Any", "3⭐", "4⭐", "5⭐"])
+    st.markdown('<div class="sidebar-section-label">Budget preference</div>', unsafe_allow_html=True)
+    budget = st.radio("", ["Economy", "Standard", "Luxury"], index=0)
 
-st.sidebar.subheader("🎒 Packing Checklist")
-for item, checked in {
-    "👕 Clothes": True,
-    "🩴 Comfortable Footwear": True,
-    "🕶️ Sunglasses & Sunscreen": False,
-    "📖 Travel Guidebook": False,
-    "💊 Medications & First-Aid": True,
-}.items():
-    st.sidebar.checkbox(item, value=checked)
+    st.markdown('<div class="sidebar-section-label">Flight class</div>', unsafe_allow_html=True)
+    flight_class = st.radio("", ["Economy", "Business", "First Class"], index=0)
 
-st.sidebar.subheader("🛂 Travel Essentials")
-visa_required = st.sidebar.checkbox("🛃 Check Visa Requirements")
-travel_insurance = st.sidebar.checkbox("🛡️ Get Travel Insurance")
-currency_converter = st.sidebar.checkbox("💱 Currency Exchange Rates")
+    st.markdown('<div class="sidebar-section-label">Preferred hotel rating</div>', unsafe_allow_html=True)
+    hotel_rating = st.selectbox("", ["Any", "3⭐", "4⭐", "5⭐"])
+
+    st.markdown('<div class="sidebar-section-label">Packing checklist</div>', unsafe_allow_html=True)
+    for item, checked in {
+        "👕 Clothes": True,
+        "🩴 Comfortable Footwear": True,
+        "🕶️ Sunglasses & Sunscreen": False,
+        "📖 Travel Guidebook": False,
+        "💊 Medications & First-Aid": True,
+    }.items():
+        st.checkbox(item, value=checked)
+
+    st.markdown('<div class="sidebar-section-label">Travel essentials</div>', unsafe_allow_html=True)
+    visa_required = st.checkbox("🛃 Check Visa Requirements")
+    travel_insurance = st.checkbox("🛡️ Get Travel Insurance")
+    currency_converter = st.checkbox("💱 Currency Exchange Rates")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
 # ============== IATA FROM CITY NAMES ==============
 
@@ -417,3 +472,4 @@ Return a Markdown-formatted answer with:
 
     st.subheader("🗺️ Your AI Itinerary (Budget‑Aware)")
     st.markdown(ai_itinerary)
+
