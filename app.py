@@ -569,60 +569,69 @@ Return a Markdown-formatted answer with:
                 except Exception as e:
                     ai_itinerary = f"AI Error: {e}"
 
-        st.markdown(
-            '<div class="flight-section-title">✈️ Cheapest Flight Options (Live from SerpAPI)</div>',
-            unsafe_allow_html=True,
-        )
-        if cheapest_flights:
-            cols = st.columns(len(cheapest_flights))
-            for i, f in enumerate(cheapest_flights):
-                with cols[i]:
-                    logo = f.get("airline_logo", "")
+       st.markdown(
+    '<div class="flight-section-title">✈️ Cheapest Flight Options (Live from SerpAPI)</div>',
+    unsafe_allow_html=True,
+)
 
-                    raw_airline = f.get("airline")
-                    segment_airline = f.get("flights", [{}])[0].get("airline")
-                    airline = raw_airline or segment_airline or "Airline"
+if cheapest_flights:
+    # Show flights in rows of 3 cards
+    num_cols = 3
+    for row_start in range(0, len(cheapest_flights), num_cols):
+        row_flights = cheapest_flights[row_start: row_start + num_cols]
+        cols = st.columns(len(row_flights))
 
-                    price = f.get("price", "Not Available")
-                    duration = f.get("total_duration", "N/A")
-                    flights_info = f.get("flights", [{}])
-                    dep = flights_info[0].get("departure_airport", {})
-                    arr = flights_info[-1].get("arrival_airport", {})
-                    dep_time = format_datetime(dep.get("time", "N/A"))
-                    arr_time = format_datetime(arr.get("time", "N/A"))
-                    booking_link = build_booking_link(f, source, destination, departure_date, return_date)
+        for col, f in zip(cols, row_flights):
+            with col:
+                logo = f.get("airline_logo", "")
 
-                    st.markdown(
-                        f"""
-                        <div class="flight-card">
-                            <img src="{logo}" width="80" alt="Flight Logo" />
-                            <h3 style="margin: 10px 0;">{airline}</h3>
-                            <p><strong>Departure:</strong> {dep_time}</p>
-                            <p><strong>Arrival:</strong> {arr_time}</p>
-                            <p><strong>Duration:</strong> {duration} min</p>
-                            <h2 style="color: #34a853; margin-top: 4px;">₹ {price}</h2>
-                            <a href="{booking_link}" target="_blank" style="
-                                display: inline-block;
-                                padding: 8px 18px;
-                                font-size: 15px;
-                                font-weight: 600;
-                                color: #0b1020;
-                                background: linear-gradient(135deg,#8ab4f8,#c58af9);
-                                text-decoration: none;
-                                border-radius: 999px;
-                                margin-top: 10px;
-                            ">🔗 Book on Google Flights</a>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-            if min_price is not None:
-                st.info(
-                    f"💡 Flight price summary: min ₹{min_price}, "
-                    f"max ₹{max_price}, avg ≈ ₹{int(avg_price)}"
+                raw_airline = f.get("airline")
+                segment_airline = f.get("flights", [{}])[0].get("airline")
+                airline = raw_airline or segment_airline or "Airline"
+
+                price = f.get("price", "Not Available")
+                duration = f.get("total_duration", "N/A")
+                flights_info = f.get("flights", [{}])
+                dep = flights_info[0].get("departure_airport", {})
+                arr = flights_info[-1].get("arrival_airport", {})
+                dep_time = format_datetime(dep.get("time", "N/A"))
+                arr_time = format_datetime(arr.get("time", "N/A"))
+                booking_link = build_booking_link(
+                    f, source, destination, departure_date, return_date
                 )
-        else:
-            st.warning("⚠️ No flight data available. Try changing dates or airports.")
+
+                st.markdown(
+                    f"""
+                    <div class="flight-card">
+                        <img src="{logo}" width="80" alt="Flight Logo" />
+                        <h3 style="margin: 10px 0;">{airline}</h3>
+                        <p><strong>Departure:</strong> {dep_time}</p>
+                        <p><strong>Arrival:</strong> {arr_time}</p>
+                        <p><strong>Duration:</strong> {duration} min</p>
+                        <h2 style="color: #34a853; margin-top: 4px;">₹ {price}</h2>
+                        <a href="{booking_link}" target="_blank" style="
+                            display: inline-block;
+                            padding: 8px 18px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            color: #0b1020;
+                            background: linear-gradient(135deg,#8ab4f8,#c58af9);
+                            text-decoration: none;
+                            border-radius: 999px;
+                            margin-top: 10px;
+                        ">🔗 Book on Google Flights</a>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    if min_price is not None:
+        st.info(
+            f"💡 Flight price summary: min ₹{min_price}, "
+            f"max ₹{max_price}, avg ≈ ₹{int(avg_price)}"
+        )
+else:
+    st.warning("⚠️ No flight data available. Try changing dates or airports.")
 
         st.subheader("🗺️ Your AI itinerary (budget‑aware)")
         st.markdown(ai_itinerary)
@@ -631,3 +640,4 @@ Return a Markdown-formatted answer with:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
