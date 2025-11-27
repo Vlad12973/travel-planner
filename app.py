@@ -566,23 +566,25 @@ Return a Markdown-formatted answer with:
         )
         if cheapest_flights:
             cols = st.columns(len(cheapest_flights))
-            for i, f in enumerate(cheapest_flights):
-                with cols[i]:
-                    logo = f.get("airline_logo", "")
+for i, f in enumerate(cheapest_flights):
+    with cols[i]:
+        logo = f.get("airline_logo", "")
 
-# Try multiple places for airline name before falling back
-raw_airline = f.get("airline")
-segment_airline = f.get("flights", [{}])[0].get("airline")
-airline = raw_airline or segment_airline or "Airline"
+        # Get airline name from multiple places to avoid "Unknown Airline"
+        raw_airline = f.get("airline")
+        segment_airline = f.get("flights", [{}])[0].get("airline")
+        airline = raw_airline or segment_airline or "Airline"
 
-                    price = f.get("price", "Not Available")
-                    duration = f.get("total_duration", "N/A")
-                    flights_info = f.get("flights", [{}])
-                    dep = flights_info[0].get("departure_airport", {})
-                    arr = flights_info[-1].get("arrival_airport", {})
-                    dep_time = format_datetime(dep.get("time", "N/A"))
-                    arr_time = format_datetime(arr.get("time", "N/A"))
-                    booking_link = build_booking_link(f, source, destination, departure_date, return_date)
+        price = f.get("price", "Not Available")
+        duration = f.get("total_duration", "N/A")
+        flights_info = f.get("flights", [{}])
+        dep = flights_info[0].get("departure_airport", {})
+        arr = flights_info[-1].get("arrival_airport", {})
+        dep_time = format_datetime(dep.get("time", "N/A"))
+        arr_time = format_datetime(arr.get("time", "N/A"))
+        booking_link = build_booking_link(f, source, destination, departure_date, return_date)
+        
+
 
                     st.markdown(
                         f"""
@@ -623,4 +625,5 @@ airline = raw_airline or segment_airline or "Airline"
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
 
