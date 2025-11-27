@@ -1,3 +1,16 @@
+Here is a full, clean `app.py` with:
+
+- Incognito-style dark UI  
+- Hero + popular trips + compact search bar  
+- From/To as dropdowns (preset cities, no separate Airports section)  
+- City → IATA mapping done automatically  
+- Up to 8 flights shown in rows of 3  
+- Airline names fixed  
+- SerpAPI + OpenAI itinerary as before
+
+Replace your existing `app.py` with this:
+
+```python
 import os
 from datetime import datetime
 
@@ -19,7 +32,7 @@ if not OPENAI_API_KEY:
 
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
-# ================== CITY → IATA MAP ==================
+# ================== CITY → IATA MAP + PRESET CITIES ==================
 
 CITY_IATA_MAP = {
     "hyderabad": [("Hyderabad - Rajiv Gandhi International", "HYD")],
@@ -34,8 +47,22 @@ CITY_IATA_MAP = {
     "kochi": [("Kochi - Cochin International", "COK")],
 }
 
-def get_airport_options(city_name: str):
-    return CITY_IATA_MAP.get(city_name.strip().lower(), [])
+PRESET_CITIES = list(CITY_IATA_MAP.keys())
+CITY_LABELS = {
+    "hyderabad": "Hyderabad",
+    "mumbai": "Mumbai",
+    "delhi": "Delhi",
+    "bangalore": "Bengaluru",
+    "bengaluru": "Bengaluru",
+    "chennai": "Chennai",
+    "kolkata": "Kolkata",
+    "pune": "Pune",
+    "ahmedabad": "Ahmedabad",
+    "kochi": "Kochi",
+}
+
+def get_airport_options(city_key: str):
+    return CITY_IATA_MAP.get(city_key.strip().lower(), [])
 
 # ================== GLOBAL STYLES (INCOGNITO) ==================
 
@@ -263,7 +290,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ================== HELPER FUNCTIONS ==================
+# ================== FLIGHT + AI HELPERS ==================
 
 def format_datetime(iso_string: str) -> str:
     try:
@@ -271,21 +298,6 @@ def format_datetime(iso_string: str) -> str:
         return dt.strftime("%b-%d, %Y | %I:%M %p")
     except Exception:
         return "N/A"
-
-def choose_iata(city_name: str, fallback_default: str, key_prefix: str):
-    airports = get_airport_options(city_name)
-    if airports:
-        label = st.selectbox(
-            key_prefix + "_airport",
-            [f"{name} ({code})" for name, code in airports],
-        )
-        return label.split("(")[-1].replace(")", "").strip()
-    else:
-        return st.text_input(
-            key_prefix + "_iata",
-            fallback_default,
-            label_visibility="collapsed",
-        )
 
 def fetch_flights(source_code, destination_code, dep_date, ret_date):
     params = {
@@ -305,10 +317,10 @@ def extract_top_flights(flight_data, max_results=8):
     best_flights = flight_data.get("best_flights", [])
     other_flights = flight_data.get("other_flights", [])
     all_flights = best_flights + other_flights
-    
+
     if not all_flights:
         return []
-    
+
     sorted_flights = sorted(
         all_flights,
         key=lambda x: x.get("price", float("inf"))
@@ -325,10 +337,7 @@ def build_booking_link(flight, source, destination, departure_date, return_date)
         f"+on+{departure_date}+return+{return_date}"
     )
 
-# ================== HERO + SEARCH BAR ==================
-
-source_city_default = "Hyderabad"
-destination_city_default = "Delhi"
+# ================== HERO + CITY DROPDOWNS ==================
 
 with st.container():
     st.markdown(
@@ -347,7 +356,7 @@ with st.container():
                 <div class="popular-card">
                     <img src="https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg" />
                     <strong>Trip to Egypt</strong><br>
-                    <span style="font-size:12px;color:#9aa0a6;">27 people going</span>
+                                        <span style="font-size:12px;color:#9aa0a6;">27 people going</span>
                 </div>
                 <div class="popular-card">
                     <img src="https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg" />
@@ -361,23 +370,50 @@ with st.container():
     )
 
     sc1, sc2, sc3, sc4, sc5 = st.columns([2.2, 2.2, 1.6, 1.6, 1.1])
+
     with sc1:
         st.markdown('<div class="search-label">From (city)</div>', unsafe_allow_html=True)
-        source_city = st.text_input("from_city", source_city_default, label_visibility="collapsed")
+        source_city_key = st.selectbox(
+            "from_city",
+            PRESET_CITIES,
+            index=PRESET_CITIES.index("kochi") if "kochi" in PRESET_CITIES else 0,
+            format_func=lambda k: CITY_LABELS.get(k, k.title()),
+            label_visibility="collapsed",
+        )
+
     with sc2:
         st.markdown('<div class="search-label">To (city)</div>', unsafe_allow_html=True)
-        destination_city = st.text_input("to_city", destination_city_default, label_visibility="collapsed")
+        destination_city_key = st.selectbox(
+            "to_city",
+            PRESET_CITIES,
+            index=PRESET_CITIES.index("delhi") if "delhi" in PRESET_CITIES else 0,
+            format_func=lambda k: CITY_LABELS.get(k, k.title()),
+            label_visibility="collapsed",
+        )
+
     with sc3:
         st.markdown('<div class="search-label">Check‑in</div>', unsafe_allow_html=True)
         departure_date = st.date_input("dep_date", label_visibility="collapsed")
+
     with sc4:
         st.markdown('<div class="search-label">Check‑out</div>', unsafe_allow_html=True)
         return_date = st.date_input("ret_date", label_visibility="collapsed")
+
     with sc5:
         st.markdown('<div class="search-label">&nbsp;</div>', unsafe_allow_html=True)
         search_clicked = st.button("Search", use_container_width=True)
 
     st.markdown("</div></div>", unsafe_allow_html=True)
+
+# Human‑readable city names for display
+source_city = CITY_LABELS.get(source_city_key, source_city_key.title())
+destination_city = CITY_LABELS.get(destination_city_key, destination_city_key.title())
+
+# Automatically pick IATA from mapping (first airport per city)
+src_airports = get_airport_options(source_city_key)
+dst_airports = get_airport_options(destination_city_key)
+source = src_airports[0][1] if src_airports else "HYD"
+destination = dst_airports[0][1] if dst_airports else "DEL"
 
 # ================== SIDEBAR ==================
 
@@ -420,7 +456,7 @@ with st.sidebar:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ================== 2-COLUMN MAIN LAYOUT ==================
+# ================== 2‑COLUMN MAIN LAYOUT ==================
 
 main_col, summary_col = st.columns([3, 1.1])
 
@@ -440,15 +476,6 @@ with main_col:
             "Relaxing on the beach, exploring historical sites",
             height=90,
         )
-
-    st.markdown("### 🛫 Airports")
-    at_left, at_right = st.columns(2)
-    with at_left:
-        st.markdown("From (airport)")
-        source = choose_iata(source_city, "HYD", "from_iata")
-    with at_right:
-        st.markdown("To (airport)")
-        destination = choose_iata(destination_city, "DEL", "to_iata")
 
 with summary_col:
     st.markdown(
@@ -487,6 +514,7 @@ with summary_col:
 
 if search_clicked:
     with main_col:
+        # ----- Fetch flights -----
         with st.spinner("✈️ Finding the best real-time flight options for you..."):
             try:
                 flight_data = fetch_flights(source, destination, departure_date, return_date)
@@ -495,6 +523,7 @@ if search_clicked:
                 st.error(f"Error fetching flights: {e}")
                 cheapest_flights = []
 
+        # Prepare summary for AI
         flight_summary = "No flights found."
         min_price = max_price = avg_price = None
         if cheapest_flights:
@@ -511,6 +540,7 @@ if search_clicked:
                 min_price, max_price = min(prices), max(prices)
                 avg_price = sum(prices) / len(prices)
 
+        # ----- AI itinerary -----
         ai_itinerary = "AI itinerary not available (missing OPENAI_API_KEY)."
         if client:
             with st.spinner("🤖 Our advanced AI is crafting your personalized travel plan..."):
@@ -569,6 +599,7 @@ Return a Markdown-formatted answer with:
                 except Exception as e:
                     ai_itinerary = f"AI Error: {e}"
 
+        # ----- Flights display (rows of 3) -----
         st.markdown(
             '<div class="flight-section-title">✈️ Cheapest Flight Options (Live from SerpAPI)</div>',
             unsafe_allow_html=True,
@@ -595,7 +626,9 @@ Return a Markdown-formatted answer with:
                         arr = flights_info[-1].get("arrival_airport", {})
                         dep_time = format_datetime(dep.get("time", "N/A"))
                         arr_time = format_datetime(arr.get("time", "N/A"))
-                        booking_link = build_booking_link(f, source, destination, departure_date, return_date)
+                        booking_link = build_booking_link(
+                            f, source, destination, departure_date, return_date
+                        )
 
                         st.markdown(
                             f"""
@@ -630,6 +663,7 @@ Return a Markdown-formatted answer with:
         else:
             st.warning("⚠️ No flight data available. Try changing dates or airports.")
 
+        # ----- Itinerary + footer -----
         st.subheader("🗺️ Your AI itinerary (budget‑aware)")
         st.markdown(ai_itinerary)
 
@@ -637,3 +671,4 @@ Return a Markdown-formatted answer with:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
