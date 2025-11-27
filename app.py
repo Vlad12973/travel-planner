@@ -302,7 +302,7 @@ def fetch_flights(source_code, destination_code, dep_date, ret_date):
 
 def extract_cheapest_flights(flight_data):
     best_flights = flight_data.get("best_flights", [])
-    sorted_flights = sorted(best_flights, key=lambda x: x.get("price", float("inf")))[:3]
+    sorted_flights = sorted(best_flights, key=lambda x: x.get("price", float("inf")))[:8]
     return sorted_flights
 
 def build_booking_link(flight, source, destination, departure_date, return_date):
@@ -624,6 +624,7 @@ Return a Markdown-formatted answer with:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
 
 
 
