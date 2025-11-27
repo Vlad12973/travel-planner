@@ -274,7 +274,7 @@ st.markdown(
     }
     /* Custom airplane cursor for the whole app */
     html, body, * {
-        cursor: url("https://icons.iconarchive.com/icons/designbolts/disney-planes-2013/128/Dusty-Plane-icon.png") 4 4, auto;
+        cursor: url("https://icons.iconarchive.com/icons/designbolts/disney-planes-2013/72/Dusty-Plane-icon.png") 4 4, auto;
     }
     </style>
     """,
@@ -662,6 +662,7 @@ Return a Markdown-formatted answer with:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
 
 
 
