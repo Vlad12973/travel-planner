@@ -4,27 +4,23 @@ from datetime import datetime
 
 import streamlit as st
 from serpapi import GoogleSearch
-from agno.agent import Agent
-from agno.tools.serpapi import SerpApiTools
-from agno.models.google import Gemini
+from openai import OpenAI
 
-# ================== CONFIG & API KEYS ==================
+# ============== CONFIG & KEYS ==============
 
 st.set_page_config(page_title="🌍 AI Travel Planner", layout="wide")
 
-# Read keys from Streamlit secrets
 SERPAPI_KEY = st.secrets.get("SERPAPI_KEY", "")
-GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY", "")
-
-# Configure env for Gemini (agno expects GOOGLE_API_KEY env var)
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", "")
 
 if not SERPAPI_KEY:
     st.warning("⚠️ SERPAPI_KEY not set in secrets. Flight search will fail.")
-if not GOOGLE_API_KEY:
-    st.warning("⚠️ GOOGLE_API_KEY not set in secrets. AI agents will fail.")
+if not OPENAI_API_KEY:
+    st.warning("⚠️ OPENAI_API_KEY not set in secrets. AI itinerary will fail.")
 
-# ================== STYLES & HEADER ==================
+client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+# ============== STYLES & HEADER ==============
 
 st.markdown(
     """
@@ -52,11 +48,11 @@ st.markdown(
 
 st.markdown('<h1 class="title">✈️ AI-Powered Travel Planner</h1>', unsafe_allow_html=True)
 st.markdown(
-    '<p class="subtitle">Plan your dream trip with AI: real flights, hotels, and a smart itinerary.</p>',
+    '<p class="subtitle">Real flights via SerpAPI + itinerary via OpenAI.</p>',
     unsafe_allow_html=True,
 )
 
-# ================== USER INPUTS ==================
+# ============== USER INPUTS ==============
 
 st.markdown("### 🌍 Where are you headed?")
 source = st.text_input("🛫 Departure City (IATA Code):", "BOM")
@@ -102,7 +98,7 @@ activity_preferences = st.text_area(
 departure_date = st.date_input("Departure Date")
 return_date = st.date_input("Return Date")
 
-# ================== SIDEBAR ==================
+# ============== SIDEBAR ==============
 
 st.sidebar.title("🌎 Travel Assistant")
 st.sidebar.subheader("Personalize Your Trip")
@@ -127,18 +123,7 @@ visa_required = st.sidebar.checkbox("🛃 Check Visa Requirements")
 travel_insurance = st.sidebar.checkbox("🛡️ Get Travel Insurance")
 currency_converter = st.sidebar.checkbox("💱 Currency Exchange Rates")
 
-# ================== SERPAPI FLIGHT SEARCH ==================
-
-base_flight_params = {
-    "engine": "google_flights",
-    "departure_id": source,
-    "arrival_id": destination,
-    "outbound_date": str(departure_date),
-    "return_date": str(return_date),
-    "currency": "INR",
-    "hl": "en",
-    "api_key": SERPAPI_KEY,
-}
+# ============== SERPAPI FLIGHT SEARCH ==============
 
 def fetch_flights(source_code, destination_code, dep_date, ret_date):
     params = {
@@ -159,51 +144,7 @@ def extract_cheapest_flights(flight_data):
     sorted_flights = sorted(best_flights, key=lambda x: x.get("price", float("inf")))[:3]
     return sorted_flights
 
-# ================== AGNO AI AGENTS (GEMINI 2.0 FLASH EXP) ==================
-
-researcher = Agent(
-    name="Researcher",
-    instructions=[
-        "Identify the travel destination specified by the user.",
-        "Gather detailed information on the destination, including climate, culture, and safety tips.",
-        "Find popular attractions, landmarks, and must-visit places.",
-        "Search for activities that match the user's interests and travel style.",
-        "Prioritize information from reliable sources and official travel guides.",
-        "Provide well-structured summaries with key insights and recommendations.",
-    ],
-    model=Gemini(id="gemini-pro"),
-
-    tools=[SerpApiTools(api_key=SERPAPI_KEY)],
-)
-
-planner = Agent(
-    name="Planner",
-    instructions=[
-        "Gather details about the user's travel preferences and budget.",
-        "Create a detailed itinerary with scheduled activities and estimated costs.",
-        "Ensure the itinerary includes transportation options and travel time estimates.",
-        "Optimize the schedule for convenience and enjoyment.",
-        "Present the itinerary in a structured format.",
-    ],
- model=Gemini(id="gemini-pro"),
-
-)
-
-hotel_restaurant_finder = Agent(
-    name="Hotel & Restaurant Finder",
-    instructions=[
-        "Identify key locations in the user's travel itinerary.",
-        "Search for highly rated hotels near those locations.",
-        "Search for top-rated restaurants based on cuisine preferences and proximity.",
-        "Prioritize results based on user preferences, ratings, and availability.",
-        "Provide direct booking links or reservation options where possible.",
-    ],
-   model=Gemini(id="gemini-pro"),
-
-    tools=[SerpApiTools(api_key=SERPAPI_KEY)],
-)
-
-# ================== MAIN ACTION ==================
+# ============== MAIN ACTION ==============
 
 if st.button("🚀 Generate Travel Plan"):
     # 1) Flights
@@ -215,49 +156,60 @@ if st.button("🚀 Generate Travel Plan"):
             st.error(f"Error fetching flights: {e}")
             cheapest_flights = []
 
-    # 2) Research
-    with st.spinner("🔍 Researching best attractions & activities..."):
-        research_prompt = (
-            f"Research the best attractions and activities in {destination} for a {num_days}-day "
-            f"{travel_theme.lower()} trip. The traveler enjoys: {activity_preferences}. "
-            f"Budget: {budget}. Flight Class: {flight_class}. Hotel Rating: {hotel_rating}. "
-            f"Visa Requirement: {visa_required}. Travel Insurance: {travel_insurance}."
-        )
-        try:
-            research_results = researcher.run(research_prompt, stream=False)
-        except Exception as e:
-            st.error(f"Research agent error: {e}")
-            research_results = type("obj", (), {"content": "Research unavailable due to an error."})
+    # Prepare a compact summary of flights for the AI
+    flight_summary = "No flights found."
+    if cheapest_flights:
+        lines = []
+        for f in cheapest_flights:
+            lines.append(
+                f"- {f.get('airline', 'Airline')} | ₹{f.get('price', 'N/A')} | {f.get('total_duration', 'N/A')} min"
+            )
+        flight_summary = "\n".join(lines)
 
-    # 3) Hotels & restaurants
-    with st.spinner("🏨 Searching for hotels & restaurants..."):
-        hotel_restaurant_prompt = (
-            f"Find the best hotels and restaurants near popular attractions in {destination} for a "
-            f"{travel_theme.lower()} trip. Budget: {budget}. Hotel Rating: {hotel_rating}. "
-            f"Preferred activities: {activity_preferences}."
-        )
-        try:
-            hotel_restaurant_results = hotel_restaurant_finder.run(hotel_restaurant_prompt, stream=False)
-        except Exception as e:
-            st.error(f"Hotel/restaurant agent error: {e}")
-            hotel_restaurant_results = type("obj", (), {"content": "Hotel & restaurant suggestions unavailable."})
+    # 2) AI itinerary via OpenAI
+    ai_itinerary = "AI itinerary not available (missing OPENAI_API_KEY)."
+    if client:
+        with st.spinner("🤖 OpenAI is creating your personalized itinerary..."):
+            try:
+                prompt = f"""
+You are an expert travel planner.
 
-    # 4) Itinerary
-    with st.spinner("🗺️ Creating your personalized itinerary..."):
-        planning_prompt = (
-            f"Based on the following data, create a {num_days}-day itinerary for a {travel_theme.lower()} trip to "
-            f"{destination}. The traveler enjoys: {activity_preferences}. Budget: {budget}. "
-            f"Flight Class: {flight_class}. Hotel Rating: {hotel_rating}. Visa Requirement: {visa_required}. "
-            f"Travel Insurance: {travel_insurance}. Research: {research_results.content}. "
-            f"Flights: {json.dumps(cheapest_flights)}. Hotels & Restaurants: {hotel_restaurant_results.content}."
-        )
-        try:
-            itinerary = planner.run(planning_prompt, stream=False)
-        except Exception as e:
-            st.error(f"Itinerary agent error: {e}")
-            itinerary = type("obj", (), {"content": "Itinerary could not be generated due to an error."})
+Create a detailed {num_days}-day itinerary for a {travel_theme.lower()} trip from {source} to {destination}.
 
-    # ================== DISPLAY RESULTS ==================
+Traveler preferences:
+- Activities: {activity_preferences}
+- Budget: {budget}
+- Flight class: {flight_class}
+- Hotel rating: {hotel_rating}
+- Visa required: {visa_required}
+- Travel insurance: {travel_insurance}
+
+Real flight options found:
+{flight_summary}
+
+Please provide:
+1. A short 2-3 line overview of the trip.
+2. The best flight choice from the above, with reasoning.
+3. 3 hotel suggestions (area + type, no real bookings).
+4. A day-by-day itinerary for {num_days} days (morning/afternoon/evening).
+5. Rough total cost range in INR for the whole trip.
+
+Format the response nicely using Markdown with headings and bullet points.
+                """
+
+                completion = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful, expert travel planner."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.7,
+                )
+                ai_itinerary = completion.choices[0].message.content
+            except Exception as e:
+                ai_itinerary = f"AI Error: {e}"
+
+    # ============== DISPLAY RESULTS ==============
 
     st.subheader("✈️ Cheapest Flight Options")
     if cheapest_flights:
@@ -277,23 +229,6 @@ if st.button("🚀 Generate Travel Plan"):
                 departure_time = format_datetime(departure.get("time", "N/A"))
                 arrival_time = format_datetime(arrival.get("time", "N/A"))
 
-                departure_token = flight.get("departure_token", "")
-                booking_link = "#"
-
-                try:
-                    if departure_token:
-                        params_with_token = {
-                            **base_flight_params,
-                            "departure_token": departure_token,
-                        }
-                        search_with_token = GoogleSearch(params_with_token)
-                        results_with_booking = search_with_token.get_dict()
-                        booking_token = results_with_booking["best_flights"][0].get("booking_token", "")
-                        if booking_token:
-                            booking_link = f"https://www.google.com/travel/flights?tfs={booking_token}"
-                except Exception:
-                    booking_link = "#"
-
                 st.markdown(
                     f"""
                     <div style="
@@ -311,17 +246,6 @@ if st.button("🚀 Generate Travel Plan"):
                         <p><strong>Arrival:</strong> {arrival_time}</p>
                         <p><strong>Duration:</strong> {total_duration} min</p>
                         <h2 style="color: #008000;">💰 {price}</h2>
-                        <a href="{booking_link}" target="_blank" style="
-                            display: inline-block;
-                            padding: 10px 20px;
-                            font-size: 16px;
-                            font-weight: bold;
-                            color: #fff;
-                            background-color: #007bff;
-                            text-decoration: none;
-                            border-radius: 5px;
-                            margin-top: 10px;
-                        ">🔗 Book Now</a>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -329,11 +253,5 @@ if st.button("🚀 Generate Travel Plan"):
     else:
         st.warning("⚠️ No flight data available.")
 
-    st.subheader("🏨 Hotels & Restaurants")
-    st.write(hotel_restaurant_results.content)
-
-    st.subheader("🗺️ Your Personalized Itinerary")
-    st.write(itinerary.content)
-
-    st.success("✅ Travel plan generated successfully!")
-
+    st.subheader("🗺️ Your AI Itinerary")
+    st.markdown(ai_itinerary)
