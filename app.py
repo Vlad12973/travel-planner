@@ -1,16 +1,3 @@
-Here is a full, clean `app.py` with:
-
-- Incognito-style dark UI  
-- Hero + popular trips + compact search bar  
-- From/To as dropdowns (preset cities, no separate Airports section)  
-- City → IATA mapping done automatically  
-- Up to 8 flights shown in rows of 3  
-- Airline names fixed  
-- SerpAPI + OpenAI itinerary as before
-
-Replace your existing `app.py` with this:
-
-```python
 import os
 from datetime import datetime
 
@@ -671,4 +658,5 @@ Return a Markdown-formatted answer with:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
 
