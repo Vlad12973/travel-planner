@@ -654,22 +654,37 @@ Return a Markdown-formatted answer with:
         else:
             st.warning("⚠️ No flight data available. Try changing dates or airports.")
 
-                # ----- Itinerary + footer -----
+                       # ----- Itinerary + footer -----
         st.subheader("🗺️ Your AI itinerary (budget‑aware)")
 
-        # Nice card around the itinerary
+        # Glassmorphic card around the itinerary
         st.markdown(
             """
             <div style="
-                background:#292a2d;
-                border-radius:16px;
-                padding:16px 18px 18px 18px;
-                border:1px solid #3c4043;
-                box-shadow:0 14px 32px rgba(0,0,0,0.9);
-                font-size:14px;
-                line-height:1.6;
-                margin-top:4px;
+                position: relative;
+                border-radius: 18px;
+                padding: 18px 20px 20px 20px;
+                margin-top: 6px;
+                background: linear-gradient(
+                    135deg,
+                    rgba(32,33,36,0.75),
+                    rgba(32,33,36,0.45)
+                );
+                border: 1px solid rgba(138,180,248,0.35);
+                box-shadow: 0 18px 40px rgba(0,0,0,0.85);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                overflow: hidden;
             ">
+                <div style="
+                    position:absolute;
+                    inset:-40%;
+                    background: radial-gradient(circle at top left, rgba(138,180,248,0.14), transparent 55%),
+                                radial-gradient(circle at bottom right, rgba(197,138,249,0.12), transparent 55%);
+                    opacity:0.9;
+                    pointer-events:none;
+                "></div>
+                <div style="position:relative; z-index:1;">
             """,
             unsafe_allow_html=True,
         )
@@ -678,22 +693,15 @@ Return a Markdown-formatted answer with:
         with st.expander("View full day‑by‑day plan", expanded=True):
             st.markdown(ai_itinerary, unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(
+            """
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         st.markdown(
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
-
-
-
-
-
-
-
-
-
-
-
-
-
