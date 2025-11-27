@@ -169,7 +169,7 @@ if st.button("🚀 Generate Travel Plan"):
     # 2) AI itinerary via OpenAI
     ai_itinerary = "AI itinerary not available (missing OPENAI_API_KEY)."
     if client:
-        with st.spinner("🤖 OpenAI is creating your personalized itinerary..."):
+        with st.spinner(""🤖 Our advanced AI is crafting your personalized travel plan...""):
             try:
                 prompt = f"""
 You are an expert travel planner.
@@ -255,3 +255,4 @@ Format the response nicely using Markdown with headings and bullet points.
 
     st.subheader("🗺️ Your AI Itinerary")
     st.markdown(ai_itinerary)
+
