@@ -569,7 +569,7 @@ Return a Markdown-formatted answer with:
                 except Exception as e:
                     ai_itinerary = f"AI Error: {e}"
 
-              st.markdown(
+        st.markdown(
             '<div class="flight-section-title">✈️ Cheapest Flight Options (Live from SerpAPI)</div>',
             unsafe_allow_html=True,
         )
@@ -637,5 +637,3 @@ Return a Markdown-formatted answer with:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
-
-
