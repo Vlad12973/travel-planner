@@ -491,7 +491,7 @@ with summary_col:
     )
 
 # ================== MAIN ACTION ==================
-
+    
 if search_clicked:
     with main_col:
         with st.spinner("✈️ Finding the best real-time flight options for you..."):
@@ -636,6 +636,7 @@ else:
             unsafe_allow_html=True,
         )
            
+
 
 
 
