@@ -300,13 +300,26 @@ def fetch_flights(source_code, destination_code, dep_date, ret_date):
     search = GoogleSearch(params)
     return search.get_dict()
 
-def extract_cheapest_flights(flight_data):
+def extract_top_flights(flight_data, max_results=8):
+    # Get both best_flights and other_flights from SerpAPI
     best_flights = flight_data.get("best_flights", [])
+    other_flights = flight_data.get("other_flights", [])
+
+    all_flights = best_flights + other_flights
+
+    # If nothing at all, return empty list
+    if not all_flights:
+        return []
+
+    # Sort all flights by price ascending
     sorted_flights = sorted(
-        best_flights,
+        all_flights,
         key=lambda x: x.get("price", float("inf"))
-    )  # note: no [:3] here
-    return sorted_flights
+    )
+
+    # Limit to max_results (change 8 if you want later)
+    return sorted_flights[:max_results]
+
 
 
 def build_booking_link(flight, source, destination, departure_date, return_date):
@@ -484,7 +497,7 @@ if search_clicked:
         with st.spinner("✈️ Finding the best real-time flight options for you..."):
             try:
                 flight_data = fetch_flights(source, destination, departure_date, return_date)
-                cheapest_flights = extract_cheapest_flights(flight_data)
+                cheapest_flights = extract_top_flights(flight_data, max_results=8)
             except Exception as e:
                 st.error(f"Error fetching flights: {e}")
                 cheapest_flights = []
@@ -566,68 +579,64 @@ Return a Markdown-formatted answer with:
         # Flights
                 # Flights
         st.markdown(
-            '<div class="flight-section-title">✈️ Cheapest Flight Options (Live from SerpAPI)</div>',
-            unsafe_allow_html=True,
-        )
-        if cheapest_flights:
-            cols = st.columns(len(cheapest_flights))
-            for i, f in enumerate(cheapest_flights):
-                with cols[i]:
-                    logo = f.get("airline_logo", "")
-                    
-                    # Get airline name from multiple places to avoid "Unknown Airline"
-                    raw_airline = f.get("airline")
-                    segment_airline = f.get("flights", [{}])[0].get("airline")
-                    airline = raw_airline or segment_airline or "Airline"
-                    
-                    price = f.get("price", "Not Available")
-                    duration = f.get("total_duration", "N/A")
-                    flights_info = f.get("flights", [{}])
-                    dep = flights_info[0].get("departure_airport", {})
-                    arr = flights_info[-1].get("arrival_airport", {})
-                    dep_time = format_datetime(dep.get("time", "N/A"))
-                    arr_time = format_datetime(arr.get("time", "N/A"))
-                    booking_link = build_booking_link(f, source, destination, departure_date, return_date)
+    '<div class="flight-section-title">✈️ Cheapest Flight Options (Live from SerpAPI)</div>',
+    unsafe_allow_html=True,
+)
+if cheapest_flights:
+    cols = st.columns(len(cheapest_flights))
+    for i, f in enumerate(cheapest_flights):
+        with cols[i]:
+            logo = f.get("airline_logo", "")
 
-                    st.markdown(
-                        f"""
-                        <div class="flight-card">
-                            <img src="{logo}" width="80" alt="Flight Logo" />
-                            <h3 style="margin: 10px 0;">{airline}</h3>
-                            <p><strong>Departure:</strong> {dep_time}</p>
-                            <p><strong>Arrival:</strong> {arr_time}</p>
-                            <p><strong>Duration:</strong> {duration} min</p>
-                            <h2 style="color: #34a853; margin-top: 4px;">₹ {price}</h2>
-                            <a href="{booking_link}" target="_blank" style="
-                                display: inline-block;
-                                padding: 8px 18px;
-                                font-size: 15px;
-                                font-weight: 600;
-                                color: #0b1020;
-                                background: linear-gradient(135deg,#8ab4f8,#c58af9);
-                                text-decoration: none;
-                                border-radius: 999px;
-                                margin-top: 10px;
-                            ">🔗 Book on Google Flights</a>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-            if min_price is not None:
-                st.info(
-                    f"💡 Flight price summary: min ₹{min_price}, "
-                    f"max ₹{max_price}, avg ≈ ₹{int(avg_price)}"
-                )
-        else:
-            st.warning("⚠️ No flight data available. Try changing dates or airports.")
+            # Airline name with fallback
+            raw_airline = f.get("airline")
+            segment_airline = f.get("flights", [{}])[0].get("airline")
+            airline = raw_airline or segment_airline or "Airline"
 
-        st.subheader("🗺️ Your AI itinerary (budget‑aware)")
+            price = f.get("price", "Not Available")
+            duration = f.get("total_duration", "N/A")
+            flights_info = f.get("flights", [{}])
+            dep = flights_info[0].get("departure_airport", {})
+            arr = flights_info[-1].get("arrival_airport", {})
+            dep_time = format_datetime(dep.get("time", "N/A"))
+            arr_time = format_datetime(arr.get("time", "N/A"))
+            booking_link = build_booking_link(f, source, destination, departure_date, return_date)
+
+            st.markdown(
+                f"""
+                <div class="flight-card">
+                    <img src="{logo}" width="80" alt="Flight Logo" />
+                    <h3 style="margin: 10px 0;">{airline}</h3>
+                    <p><strong>Departure:</strong> {dep_time}</p>
+                    <p><strong>Arrival:</strong> {arr_time}</p>
+                    <p><strong>Duration:</strong> {duration} min</p>
+                    <h2 style="color: #34a853; margin-top: 4px;">₹ {price}</h2>
+                    <a href="{booking_link}" target="_blank" style="
+                        display: inline-block;
+                        padding: 8px 18px;
+                        font-size: 15px;
+                        font-weight: 600;
+                        color: #0b1020;
+                        background: linear-gradient(135deg,#8ab4f8,#c58af9);
+                        text-decoration: none;
+                        border-radius: 999px;
+                        margin-top: 10px;
+                    ">🔗 Book on Google Flights</a>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+else:
+    st.warning("⚠️ No flight data available. Try changing dates or airports.")
+
+       st.subheader("🗺️ Your AI itinerary (budget‑aware)")
         st.markdown(ai_itinerary)
 
         st.markdown(
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
 
 
 
