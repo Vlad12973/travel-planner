@@ -628,6 +628,7 @@ if cheapest_flights:
             )
 else:
     st.warning("⚠️ No flight data available. Try changing dates or airports.")
+           
            st.subheader("🗺️ Your AI itinerary (budget‑aware)")
         st.markdown(ai_itinerary)
 
@@ -635,6 +636,7 @@ else:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
 
 
 
