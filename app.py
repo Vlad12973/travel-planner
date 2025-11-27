@@ -20,6 +20,33 @@ if not OPENAI_API_KEY:
 
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
+# ============== SIMPLE CITY → IATA MAPPING ==============
+
+CITY_IATA_MAP = {
+    "hyderabad": [("Hyderabad - Rajiv Gandhi International", "HYD")],
+    "mumbai": [("Mumbai - Chhatrapati Shivaji Maharaj", "BOM")],
+    "delhi": [("Delhi - Indira Gandhi International", "DEL")],
+    "bangalore": [("Bengaluru - Kempegowda International", "BLR")],
+    "bengaluru": [("Bengaluru - Kempegowda International", "BLR")],
+    "chennai": [("Chennai International", "MAA")],
+    "kolkata": [("Kolkata - Netaji Subhas Chandra Bose", "CCU")],
+    "pune": [("Pune Airport", "PNQ")],
+    "ahmedabad": [("Ahmedabad - Sardar Vallabhbhai Patel", "AMD")],
+    "kochi": [("Kochi - Cochin International", "COK")],
+    "cochin": [("Kochi - Cochin International", "COK")],
+    "goa": [("Goa - Manohar International (North)", "GOX"),
+            ("Goa - Dabolim (South)", "GOI")],
+    "jaipur": [("Jaipur International", "JAI")],
+    "lucknow": [("Lucknow - Chaudhary Charan Singh", "LKO")],
+    "visakhapatnam": [("Visakhapatnam Airport", "VTZ")],
+    "vizag": [("Visakhapatnam Airport", "VTZ")],
+}
+
+def get_airport_options(city_name: str):
+    key = city_name.strip().lower()
+    return CITY_IATA_MAP.get(key, [])
+
+
 # ============== STYLES & HEADER ==============
 
 st.markdown(
@@ -48,15 +75,42 @@ st.markdown(
 
 st.markdown('<h1 class="title">✈️ AI-Powered Travel Planner</h1>', unsafe_allow_html=True)
 st.markdown(
-    '<p class="subtitle">Real flights via SerpAPI + itinerary via OpenAI.</p>',
+    '<p class="subtitle">Real flights via SerpAPI + AI itinerary that respects your budget.</p>',
     unsafe_allow_html=True,
 )
 
 # ============== USER INPUTS ==============
 
 st.markdown("### 🌍 Where are you headed?")
-source = st.text_input("🛫 Departure City (IATA Code):", "BOM")
-destination = st.text_input("🛬 Destination (IATA Code):", "DEL")
+
+# User types city names
+source_city = st.text_input("🛫 Departure City (name):", "Hyderabad")
+destination_city = st.text_input("🛬 Destination City (name):", "Delhi")
+
+source_airports = get_airport_options(source_city)
+destination_airports = get_airport_options(destination_city)
+
+# Departure airport selection
+if source_airports:
+    source_choice = st.selectbox(
+        "Select departure airport (IATA):",
+        [f"{name} ({code})" for name, code in source_airports],
+        key="source_airport_select",
+    )
+    source = source_choice.split("(")[-1].replace(")", "").strip()
+else:
+    source = st.text_input("Departure IATA code (fallback):", "HYD")
+
+# Destination airport selection
+if destination_airports:
+    dest_choice = st.selectbox(
+        "Select destination airport (IATA):",
+        [f"{name} ({code})" for name, code in destination_airports],
+        key="dest_airport_select",
+    )
+    destination = dest_choice.split("(")[-1].replace(")", "").strip()
+else:
+    destination = st.text_input("Destination IATA code (fallback):", "DEL")
 
 st.markdown("### 📅 Plan Your Adventure")
 num_days = st.slider("🕒 Trip Duration (days):", 1, 14, 5)
@@ -76,7 +130,7 @@ st.markdown(
         border-radius: 10px;
         margin-top: 20px;
     ">
-        <h3>🌟 Your {travel_theme} to {destination} is about to begin! 🌟</h3>
+        <h3>🌟 Your {travel_theme} to {destination_city} is about to begin! 🌟</h3>
         <p>Let's find the best flights, stays, and experiences for your journey.</p>
     </div>
     """,
@@ -148,7 +202,7 @@ def extract_cheapest_flights(flight_data):
 
 if st.button("🚀 Generate Travel Plan"):
     # 1) Flights
-    with st.spinner("✈️ Fetching best flight options..."):
+    with st.spinner("✈️ Finding the best real-time flight options for you..."):
         try:
             flight_data = fetch_flights(source, destination, departure_date, return_date)
             cheapest_flights = extract_cheapest_flights(flight_data)
@@ -156,51 +210,78 @@ if st.button("🚀 Generate Travel Plan"):
             st.error(f"Error fetching flights: {e}")
             cheapest_flights = []
 
-    # Prepare a compact summary of flights for the AI
+    # Prepare flight summary + price stats for AI
     flight_summary = "No flights found."
+    min_price = None
+    max_price = None
+    avg_price = None
+
     if cheapest_flights:
+        prices = []
         lines = []
         for f in cheapest_flights:
-            lines.append(
-                f"- {f.get('airline', 'Airline')} | ₹{f.get('price', 'N/A')} | {f.get('total_duration', 'N/A')} min"
-            )
+            price = f.get("price")
+            if isinstance(price, (int, float)):
+                prices.append(price)
+            airline = f.get("airline", "Airline")
+            duration = f.get("total_duration", "N/A")
+            lines.append(f"- {airline} | ₹{price} | {duration} min")
         flight_summary = "\n".join(lines)
 
-    # 2) AI itinerary via OpenAI
+        if prices:
+            min_price = min(prices)
+            max_price = max(prices)
+            avg_price = sum(prices) / len(prices)
+
+    # 2) AI itinerary via OpenAI (uses price info in budget)
     ai_itinerary = "AI itinerary not available (missing OPENAI_API_KEY)."
     if client:
         with st.spinner("🤖 Our advanced AI is crafting your personalized travel plan..."):
             try:
+                budget_hint = f"Flight price range (from live data): min ₹{min_price}, max ₹{max_price}, avg ₹{avg_price}." if min_price is not None else "No flight price data available."
+
                 prompt = f"""
 You are an expert travel planner.
 
-Create a detailed {num_days}-day itinerary for a {travel_theme.lower()} trip from {source} to {destination}.
+Create a detailed {num_days}-day itinerary for a {travel_theme.lower()} trip from {source_city} ({source}) to {destination_city} ({destination}).
 
 Traveler preferences:
 - Activities: {activity_preferences}
-- Budget: {budget}
+- Budget level: {budget}
 - Flight class: {flight_class}
-- Hotel rating: {hotel_rating}
+- Hotel rating preference: {hotel_rating}
 - Visa required: {visa_required}
 - Travel insurance: {travel_insurance}
 
-Real flight options found:
+Real flight options found (from SerpAPI / Google Flights):
 {flight_summary}
+
+Cost information:
+{budget_hint}
+
+Use the flight price range and budget level to:
+- Suggest a realistic total trip budget in INR (including flights, hotels, food, local travel, and activities).
+- Adjust hotel type, daily spending, and activity choices (more premium for Luxury, more value-optimized for Economy).
 
 Please provide:
 1. A short 2-3 line overview of the trip.
-2. The best flight choice from the above, with reasoning.
-3. 3 hotel suggestions (area + type, no real bookings).
-4. A day-by-day itinerary for {num_days} days (morning/afternoon/evening).
-5. Rough total cost range in INR for the whole trip.
+2. The best flight choice from the above, with reasoning (and approximate cost).
+3. 3 hotel suggestions (area + type, approximate nightly price range, no real booking links).
+4. A day-by-day itinerary for {num_days} days (morning / afternoon / evening).
+5. A realistic total trip cost range in INR, clearly broken down:
+   - Flights (based on price range above)
+   - Hotels (per night × nights)
+   - Food & local travel (per day × days)
+   - Activities / tickets
+6. A one-line summary like: "This plan fits well within a typical {budget} Indian traveler budget."
 
-Format the response nicely using Markdown with headings and bullet points.
+Format the response nicely using Markdown with headings, subheadings, and bullet points.
                 """
 
                 completion = client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[
-                        {"role": "system", "content": "You are a helpful, expert travel planner."},
+                        {"role": "system", "content": "You are a helpful, detail-oriented travel planner for Indian travelers. Always think in INR and be realistic on costs."},
                         {"role": "user", "content": prompt},
                     ],
                     temperature=0.7,
@@ -211,7 +292,7 @@ Format the response nicely using Markdown with headings and bullet points.
 
     # ============== DISPLAY RESULTS ==============
 
-    st.subheader("✈️ Cheapest Flight Options")
+    st.subheader("✈️ Cheapest Flight Options (Live from SerpAPI)")
     if cheapest_flights:
         cols = st.columns(len(cheapest_flights))
         for idx, flight in enumerate(cheapest_flights):
@@ -250,10 +331,13 @@ Format the response nicely using Markdown with headings and bullet points.
                     """,
                     unsafe_allow_html=True,
                 )
+        if min_price is not None:
+            st.info(
+                f"💡 Flight price summary (from results): "
+                f"min ₹{min_price}, max ₹{max_price}, avg ≈ ₹{int(avg_price)}"
+            )
     else:
-        st.warning("⚠️ No flight data available.")
+        st.warning("⚠️ No flight data available for these dates/airports. Try changing dates or airports.")
 
-    st.subheader("🗺️ Your AI Itinerary")
+    st.subheader("🗺️ Your AI Itinerary (Budget-Aware)")
     st.markdown(ai_itinerary)
-
-
