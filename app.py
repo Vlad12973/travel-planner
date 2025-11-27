@@ -654,14 +654,37 @@ Return a Markdown-formatted answer with:
         else:
             st.warning("⚠️ No flight data available. Try changing dates or airports.")
 
-        # ----- Itinerary + footer -----
+                # ----- Itinerary + footer -----
         st.subheader("🗺️ Your AI itinerary (budget‑aware)")
-        st.markdown(ai_itinerary)
+
+        # Nice card around the itinerary
+        st.markdown(
+            """
+            <div style="
+                background:#292a2d;
+                border-radius:16px;
+                padding:16px 18px 18px 18px;
+                border:1px solid #3c4043;
+                box-shadow:0 14px 32px rgba(0,0,0,0.9);
+                font-size:14px;
+                line-height:1.6;
+                margin-top:4px;
+            ">
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Collapsible long content
+        with st.expander("View full day‑by‑day plan", expanded=True):
+            st.markdown(ai_itinerary, unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown(
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
 
 
 
