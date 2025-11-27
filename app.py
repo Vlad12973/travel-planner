@@ -272,6 +272,10 @@ st.markdown(
         gap: 8px;
         border: 1px solid var(--border-subtle);
     }
+    /* Custom airplane cursor for the whole app */
+    html, body, * {
+        cursor: url("https://imgbox.com/Lkexjtkv") 4 4, auto;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -658,5 +662,6 @@ Return a Markdown-formatted answer with:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
 
 
