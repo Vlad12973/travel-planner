@@ -421,13 +421,13 @@ with st.sidebar:
     )
 
     st.markdown('<div class="sidebar-section-label">Budget preference</div>', unsafe_allow_html=True)
-    budget = st.radio("", ["Economy", "Standard", "Luxury"], index=0)
+    budget = st.radio("", ["Economy", "Standard", "Luxury"], index=0, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-section-label">Flight class</div>', unsafe_allow_html=True)
-    flight_class = st.radio("", ["Economy", "Business", "First Class"], index=0)
+    flight_class = st.radio("", ["Economy", "Business", "First Class"], index=0, label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-section-label">Preferred hotel rating</div>', unsafe_allow_html=True)
-    hotel_rating = st.selectbox("", ["Any", "3⭐", "4⭐", "5⭐"])
+    hotel_rating = st.selectbox("", ["Any", "3⭐", "4⭐", "5⭐"], label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-section-label">Packing checklist</div>', unsafe_allow_html=True)
     packing_items = {
@@ -662,6 +662,7 @@ Return a Markdown-formatted answer with:
             '<div class="footer-strip">✨ Built for Indian travellers • Live fares by SerpAPI • Itineraries by AI</div>',
             unsafe_allow_html=True,
         )
+
 
 
 
